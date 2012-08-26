@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Rdf-do : DataObjects-backed repositories for RDF.rb" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Rdf-do</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/ruby-rdf/rdf-do">View on GitHub</a>
+
+          <h1 id="project_title">Rdf-do</h1>
+          <h2 id="project_tagline">DataObjects-backed repositories for RDF.rb</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/ruby-rdf/rdf-do/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/ruby-rdf/rdf-do/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>RDF::DataObjects</h1>
+
+<p>DataObjects-backed RDF.rb repository, aiming for a simple use case and
+currently targeting SQLite and Postgres.</p>
+
+<ul>
+<li><a href="http://github.com/bhuga/rdf-do">http://github.com/bhuga/rdf-do</a></li>
+<li><a href="http://lists.w3.org/Archives/Public/public-rdf-ruby">http://lists.w3.org/Archives/Public/public-rdf-ruby</a></li>
+</ul><p>This was written for a tutorial, and is thus a pretty naive implementation so far.
+RDF::DataObjects stores triples in a simple subject, predicate, object, context
+table.  Don't try to back a big website with it yet.  Nonetheless, it works,
+and it passes all its tests on Heroku as well.</p>
+
+<p>Example:</p>
+
+<pre><code>repository = RDF::DataObjects::Repository.new "sqlite3:test.db"
+repository.insert(statement)
+repository.count              #=&gt; 1
+repository.delete(statement)
+</code></pre>
+
+<p>You can use any DataObjects compatible connection options to create a new
+repository, but only SQLite3 and Postgres are implemented for now.  The
+different databases are <em>just</em> different enough with their handling of unique
+constraints that some database-specific work is required for a new adapter, but
+it's not much.</p>
+
+<h2>Installation:</h2>
+
+<p>The greatly preferred installation method is via RubyGems:</p>
+
+<pre><code>$ sudo gem install rdf-do
+</code></pre>
+
+<p>Manual downloads are available at <a href="http://github.com/bhuga/rdf-do/downloads">http://github.com/bhuga/rdf-do/downloads</a></p>
+
+<p>Ruby 1.8.6 is not supported, but the tests pass with the backports gem.  Godspeed.</p>
+
+<h2>Connecting:</h2>
+
+<pre><code>require 'do_postgres'
+require 'do_sqlite3'
+repo = RDF::DataObjects::Repository.new "postgres://localhost/database"
+repo = RDF::DataObjects::Repository.new "sqlite3:test.db"
+</code></pre>
+
+<h2>Using:</h2>
+
+<p>Your repository is a fully-functional RDF.rb <code>RDF::Repository</code>.  As with any
+RDF.rb repository, this includes the mixins <code>RDF::Enumerable</code>, <code>RDF::Mutable</code>,
+<code>RDF::Durable</code>, and <code>RDF::Queryable</code>.  Please see <a href="http://rdf.rubyforge.org/RDF/Repository.html">http://rdf.rubyforge.org/RDF/Repository.html</a> for
+more information.</p>
+
+<p>Example:</p>
+
+<pre><code>require 'rdf'
+require 'rdf/ntriples'
+require 'data_objects'
+require 'do_sqlite3'
+require 'rdf/do'
+
+repo = RDF::DataObjects::Repository.new('sqlite3:test.db')
+# repo = RDF::DataObjects::Repository.new 'postgres://postgres@server/database'
+# heroku_repo = RDF::DataObjects::Repository.new(ENV['DATABASE_URL'])
+repo.load('http://datagraph.org/jhacker/foaf.nt')
+
+# How many statements did we have?
+repo.count
+#=&gt; 10
+
+# Get the URI of the first subject
+jhacker = repo.first.subject
+#=&gt; #&lt;RDF::URI(http://datagraph.org/jhacker/foaf)&gt;
+
+# Delete everything to do with it
+jhacker_statements = repo.query(:subject =&gt; jhacker) 
+repo.delete *jhacker_statements
+repo.count
+#=&gt; 7
+
+# with Postgres, we could have done this, but SQLite gives us a locking error:
+# repo.delete(*repo.query(:subject =&gt; jhacker))
+
+# Changed our mind--bring it back
+repo.insert *jhacker_statements
+repo.count
+#=&gt; 10
+</code></pre>
+
+<h3>Developing</h3>
+
+<p>The main project page is on Github, at <a href="http://github.com/bhuga/rdf-do">http://github.com/bhuga/rdf-do</a>.  You
+can get a working copy of the source tree with:</p>
+
+<pre><code>$ git clone git://github.com/bhuga/rdf-do.git
+</code></pre>
+
+<p>Or with:</p>
+
+<pre><code>$ wget http://github.com/bhuga/rdf-do/tarball/master
+</code></pre>
+
+<h3>Support</h3>
+
+<p>The preferred method to report issues is the issue queue at
+<a href="http://github.com/bhuga/rdf-do/issues">http://github.com/bhuga/rdf-do/issues</a>.  You'll get the the most attention if
+you submit a failing test for a bug, or a pending test for a feature. </p>
+
+<p>We'd also like to hear from you on the mailing list:
+<a href="http://lists.w3.org/Archives/Public/public-rdf-ruby">http://lists.w3.org/Archives/Public/public-rdf-ruby</a></p>
+
+<h3>Miscellany</h3>
+
+<ul>
+<li>Author: Ben Lavender | <a href="mailto:blavender@gmail.com">blavender@gmail.com</a> | <a href="http://bhuga.net">http://bhuga.net</a> | <a href="http://blog.datagraph.org">http://blog.datagraph.org</a>
+</li>
+<li>'License':  RDF::DataObjects is free and unemcumbered software released into the public domain.  For more information, see the included UNLICENSE file.</li>
+</ul>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Rdf-do maintained by <a href="https://github.com/ruby-rdf">ruby-rdf</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
